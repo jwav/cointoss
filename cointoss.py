@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
-'''
+"""
 cointoss: a program demonstrating how massive inequalities can emerge from the recurrent playing of a fair game among a population
-'''
+
+"""
 
 # defaults
 NB_PLAYERS = 100
@@ -28,7 +29,9 @@ def gini(x):
     return g
 
 class GameRecorder:
-    """Container class for easy recording of Game variables"""
+    """Container class for easy recording of Game variables.
+    Meant to be instanciated once in a Game object.
+    """
     def __init__(self):
         self.scores = []
         self.nb_alive_players = []
@@ -48,6 +51,8 @@ class GameRecorder:
             return False
 
 class Player:
+    """Holds params and util functions relative to individual Players.
+    Used in Game objects as an array of Players"""
     def __init__(self, id, score=STARTING_SCORE):
         self.id = id
         self.score = score
