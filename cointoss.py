@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+
 """
 cointoss: a program demonstrating how massive inequalities can emerge from the recurrent playing of a fair game among a population
 
