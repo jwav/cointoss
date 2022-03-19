@@ -121,7 +121,7 @@ class Game:
         if 0, player1 has its score incremented by 1 and player2 has its score decremented by 1.
         if 1, the opposite is performed.
         if one of the players has a score of 0, the duel is cancelled.
-        This last criterion is void if the global variable ALLOW_NEGATIVE_SCORES is set to True
+        This last criterion is void if the global variable ALLOW_NEGATIVE_SCORE is set to True
         """
         # check if zero score for either player, in which case cancel duel
         if self.players[playerid_1].score <= 0 or self.players[playerid_2].score <= 0:
@@ -233,24 +233,29 @@ Options:
 """
     print(helpstr)
 
+# TODO: make global args instance to access user parameters. Maybe a convenient encapsulation of ArgumentParser.args ?
 def handle_arguments():
-    """Checks sysargs, do something based on that, and then returns a code that is either None or an integer. If it's an integer, it means 'terminate the application with this integer as the exit code"""
-    import sys
-    args = sys.argv
-    nbargs = len(sys.argv)
-    if nbargs == 0:
-        return None
-    if args[0] == "--help":
-        display_help()
-        exit(0)
-        return 0
+    """ """
+    global ALLOW_NEGATIVE_SCORE
+    import argparse
+    parser = argparse.ArgumentParser(description="cointoss: a game about the organic emergence of inequalities")
+    # parser.add_argument("--allow-negative-scores", default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument("--allow-negative-score", dest='ALLOW_NEGATIVE_SCORE', action='store_true')
+
+    args = parser.parse_args()
+
+    ALLOW_NEGATIVE_SCORE = args.ALLOW_NEGATIVE_SCORE
+
+    exit(0)
+
+def configure_logging():
+    logging.basicConfig(level=logging.DEBUG)
+
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    logging.debug("debug-level test")
-    arguments_result = handle_arguments()
-    if arguments_result is not None:
-        exit(arguments_result)
+    configure_logging()
+    handle_arguments()
+    exit(0)
 
     game = Game()
     logging.info("== COIN TOSS GAME START ==")
