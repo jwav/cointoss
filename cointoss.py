@@ -6,15 +6,21 @@ cointoss: a program demonstrating how massive inequalities can emerge from the r
 
 """
 
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+import logging
+
+#TODO replace this shit with a proper container
+VERSION = 0.1
 # defaults
 NB_PLAYERS = 100
 NB_ROUNDS = 10
 STARTING_SCORE = 100
 BETTING_AMOUNT = 10
+# ALLOW_NEGATIVE_SCORE = True
+ALLOW_NEGATIVE_SCORE = False
 
-import random
-import numpy as np
-import matplotlib.pyplot as plt
 
 def gini(x):
     """Found on the internet. Lost the URL.
@@ -115,10 +121,12 @@ class Game:
         if 0, player1 has its score incremented by 1 and player2 has its score decremented by 1.
         if 1, the opposite is performed.
         if one of the players has a score of 0, the duel is cancelled.
+        This last criterion is void if the global variable ALLOW_NEGATIVE_SCORES is set to True
         """
         # check if zero score for either player, in which case cancel duel
         if self.players[playerid_1].score <= 0 or self.players[playerid_2].score <= 0:
-            return
+            if not ALLOW_NEGATIVE_SCORE:
+                return
 
         result = random.randint(0,1)
         if result == 0:
@@ -213,12 +221,42 @@ class Game:
         plt.show()
 
 
+# TODO: make it not complete garbage
+def display_help():
+    helpstr = """
+Usage: cointoss [ARGS]
+Options:
+    --players {number of players}
+    --nb-rounds {number of rounds to play}
+    --display-step {display step in rounds} (meaning: only display results every X rounds)
+    --allow-negative-scores: allow players to have scores below 0
+"""
+    print(helpstr)
+
+def handle_arguments():
+    """Checks sysargs, do something based on that, and then returns a code that is either None or an integer. If it's an integer, it means 'terminate the application with this integer as the exit code"""
+    import sys
+    args = sys.argv
+    nbargs = len(sys.argv)
+    if nbargs == 0:
+        return None
+    if args[0] == "--help":
+        display_help()
+        exit(0)
+        return 0
+
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    logging.debug("debug-level test")
+    arguments_result = handle_arguments()
+    if arguments_result is not None:
+        exit(arguments_result)
+
     game = Game()
-    print("GAME_RUN")
+    logging.info("== COIN TOSS GAME START ==")
     game.display()
-    for round in range(1000):
+    for round in range(NB_ROUNDS):
         game.iterate()
-        game.display(step=100, rounds=[0,1])
-    print("GAME_END")
+        game.display(step=1000, rounds=[0,1])
+    logging.info("== COIN TOSS GAME END ==")
     game.display_summary()
