@@ -43,15 +43,23 @@ class GameParams:
     nb_players = 100
 
     @staticmethod
-    def cmdarg_to_argname(cmdargs:str):
+    def cmdarg_to_paramname(cmdarg:str):
         """transforms '--argument-name' into 'argument_name'"""
-        return cmdargs.strip("--").replace("-", "_")
+        return cmdarg.strip("--").replace("-", "_")
+
+    @staticmethod
+    def paramname_to_cmdarg(paramname:str):
+        """transforms 'argument_name' into '--argument-name'"""
+        return "--" + paramname.replace("_", "-")
 
     @staticmethod
     def get_params_names() -> list:
         from inspect import getmembers
         return [m[0] for m in getmembers(GameParams) if not callable(m[1]) and not m[0].startswith('_')]
 
+    @staticmethod
+    def get_cmdargs_names() -> list:
+        return [GameParams.paramname_to_cmdarg(x) for x in GameParams.get_params_names()]
 
 class GameRecorder:
     """Container class for easy recording of Game variables.
@@ -253,6 +261,7 @@ def handle_arguments():
 
     setattr(GameParams, 'allow_negative_scores', getattr(args, 'allow_negative_scores'))
     print(GameParams.get_params_names())
+    print(GameParams.get_cmdargs_names())
                
 
     print(f"GameParams.allow_negative_scores : {GameParams.allow_negative_scores}")
