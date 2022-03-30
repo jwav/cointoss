@@ -35,6 +35,13 @@ def gini(x):
     g = 0.5 * rmad
     return g
 
+class GameParams:
+    """holder class meant to store params given by the user through command line arguments to be used by other classes and methods"""
+    def __init__(self):
+        allow_negative_scores = False
+
+
+
 class GameRecorder:
     """Container class for easy recording of Game variables.
     Meant to be instanciated once in a Game object.
@@ -220,22 +227,8 @@ class Game:
         # fig.show()
         plt.show()
 
-
-# TODO: make it not complete garbage
-def display_help():
-    helpstr = """
-Usage: cointoss [ARGS]
-Options:
-    --players {number of players}
-    --nb-rounds {number of rounds to play}
-    --display-step {display step in rounds} (meaning: only display results every X rounds)
-    --allow-negative-scores: allow players to have scores below 0
-"""
-    print(helpstr)
-
 # TODO: make global args instance to access user parameters. Maybe a convenient encapsulation of ArgumentParser.args ?
 def handle_arguments():
-    """ """
     global ALLOW_NEGATIVE_SCORE
     import argparse
     parser = argparse.ArgumentParser(description="cointoss: a game about the organic emergence of inequalities")
