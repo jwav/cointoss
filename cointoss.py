@@ -11,8 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 
-#TODO replace this shit with a proper container
 VERSION = 0.1
+# TODO: all these parameters should be replaced with GameParams  
 # defaults
 NB_PLAYERS = 100
 NB_ROUNDS = 10
@@ -37,9 +37,20 @@ def gini(x):
 
 class GameParams:
     """holder class meant to store params given by the user through command line arguments to be used by other classes and methods"""
-    def __init__(self):
-        allow_negative_scores = False
+    allow_negative_scores = False
+    betting_amount = 10
+    nb_rounds = 10
+    nb_players = 100
 
+    @staticmethod
+    def cmdarg_to_argname(cmdargs:str):
+        """transforms '--argument-name' into 'argument_name'"""
+        return cmdargs.strip("--").replace("-", "_")
+
+    @staticmethod
+    def get_params_names() -> list:
+        from inspect import getmembers
+        return [m[0] for m in getmembers(GameParams) if not callable(m[1]) and not m[0].startswith('_')]
 
 
 class GameRecorder:
@@ -168,7 +179,6 @@ class Game:
         plt.waitforbuttonpress()
         plt.clf()
 
-
     def display(self, step=1, rounds:list=None, plot=True):
         """displays the current scores
         step: displays the game's status only for every `step`th round
@@ -233,11 +243,19 @@ def handle_arguments():
     import argparse
     parser = argparse.ArgumentParser(description="cointoss: a game about the organic emergence of inequalities")
     # parser.add_argument("--allow-negative-scores", default=False, action=argparse.BooleanOptionalAction)
-    parser.add_argument("--allow-negative-score", dest='ALLOW_NEGATIVE_SCORE', action='store_true')
+    #TODO: programmatically add arguments from GameParams attribute list
+    parser.add_argument("--allow-negative-score", dest='allow_negative_scores', action='store_true')
 
     args = parser.parse_args()
 
-    ALLOW_NEGATIVE_SCORE = args.ALLOW_NEGATIVE_SCORE
+    # ALLOW_NEGATIVE_SCORE = args.ALLOW_NEGATIVE_SCORE
+    # GameParams.allow_negative_scores = args.allow_negative_scores
+
+    setattr(GameParams, 'allow_negative_scores', getattr(args, 'allow_negative_scores'))
+    print(GameParams.get_params_names())
+               
+
+    print(f"GameParams.allow_negative_scores : {GameParams.allow_negative_scores}")
 
     exit(0)
 
