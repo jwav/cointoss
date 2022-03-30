@@ -53,9 +53,17 @@ class GameParams:
         return "--" + paramname.replace("_", "-")
 
     @staticmethod
-    def get_params_names() -> list:
+    def get_params_tuples() -> list:
         from inspect import getmembers
-        return [m[0] for m in getmembers(GameParams) if not callable(m[1]) and not m[0].startswith('_')]
+        return [m for m in getmembers(GameParams) if not callable(m[1]) and not m[0].startswith('_')]
+
+    @staticmethod
+    def get_param_type(paramname):
+        return [type(v) for (n,v) in GameParams.get_params_tuples() if n == paramname][0]
+
+    @staticmethod
+    def get_params_names() -> list:
+        return [x[0] for x in GameParams.get_params_tuples()]
 
     @staticmethod
     def get_cmdargs_names() -> list:
@@ -252,19 +260,32 @@ def handle_arguments():
     parser = argparse.ArgumentParser(description="cointoss: a game about the organic emergence of inequalities")
     # parser.add_argument("--allow-negative-scores", default=False, action=argparse.BooleanOptionalAction)
     #TODO: programmatically add arguments from GameParams attribute list
-    parser.add_argument("--allow-negative-score", dest='allow_negative_scores', action='store_true')
+    for paramname in GameParams.get_params_names():
+        cmdarg = GameParams.paramname_to_cmdarg(paramname)
+        paramtype = GameParams.get_param_type(paramname)
+
+        # print(f"adding argument {cmdarg} of type {paramtype}")
+        if paramtype == bool:
+            parser.add_argument(cmdarg, dest=paramname, action='store_true')
+        else:
+            parser.add_argument(cmdarg, dest=paramname)
+
 
     args = parser.parse_args()
 
     # ALLOW_NEGATIVE_SCORE = args.ALLOW_NEGATIVE_SCORE
     # GameParams.allow_negative_scores = args.allow_negative_scores
 
-    setattr(GameParams, 'allow_negative_scores', getattr(args, 'allow_negative_scores'))
-    print(GameParams.get_params_names())
-    print(GameParams.get_cmdargs_names())
-               
+    for paramname in GameParams.get_params_names():
+        value = getattr(args, paramname)
+        if value is not None:
+            print(f"setting {paramname} to {getattr(args, paramname)}")
+            setattr(GameParams, paramname, getattr(args, paramname))
 
-    print(f"GameParams.allow_negative_scores : {GameParams.allow_negative_scores}")
+    # print(GameParams.get_params_names())
+    # print(GameParams.get_cmdargs_names())
+               
+    print("\n".join(str(x) for x in GameParams.get_params_tuples()))
 
     exit(0)
 
