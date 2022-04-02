@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-
+#!/usr/bin/env python3
 
 """
 cointoss: a program demonstrating how massive inequalities can emerge from the recurrent playing of a fair game among a population
@@ -10,6 +9,8 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
+import argparse
+import sys
 
 VERSION = 0.1
 # TODO: all these parameters should be replaced with GameParams  
@@ -20,6 +21,8 @@ STARTING_SCORE = 100
 BETTING_AMOUNT = 10
 # ALLOW_NEGATIVE_SCORE = True
 ALLOW_NEGATIVE_SCORE = False
+COINTOSS_DESCRIPTION = "cointoss: a game about the organic emergence of inequalities"
+
 
 
 def gini(x):
@@ -42,32 +45,89 @@ class GameParams:
     nb_rounds = 10
     nb_players = 100
 
-    @staticmethod
-    def cmdarg_to_paramname(cmdarg:str):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return "\n".join(f"- {n} : {v}" for n,v in self.all_param_tuples())
+
+    @classmethod
+    def argname_to_paramname(cls, cmdarg:str):
         """transforms '--argument-name' into 'argument_name'"""
         return cmdarg.strip("--").replace("-", "_")
 
-    @staticmethod
-    def paramname_to_cmdarg(paramname:str):
+    @classmethod
+    def paramname_to_argname(cls, paramname:str):
         """transforms 'argument_name' into '--argument-name'"""
         return "--" + paramname.replace("_", "-")
 
-    @staticmethod
-    def get_params_tuples() -> list:
+    @classmethod
+    def all_param_tuples(cls) -> list:
+        """returns a list of couples built thusly: (param_name, value).
+        if use_argnames is True, returns --args-names instead of params_names"""
         from inspect import getmembers
-        return [m for m in getmembers(GameParams) if not callable(m[1]) and not m[0].startswith('_')]
+        return [m for m in getmembers(cls) if not callable(m[1]) and not m[0].startswith('_')]
+    
+    @classmethod
+    def all_arg_tuples(cls) -> list:
+        """same as all_param_tuples, but converts paramnames into argnames"""
+        return [(cls.paramname_to_argname(x[0]), x[1]) for x in cls.all_param_tuples()]
 
-    @staticmethod
-    def get_param_type(paramname):
-        return [type(v) for (n,v) in GameParams.get_params_tuples() if n == paramname][0]
+    @classmethod
+    def get_param_type(cls, paramname):
+        """returns the type of a given paramname"""
+        return [type(v) for (n,v) in GameParams.all_param_tuples() if n == paramname][0]
 
-    @staticmethod
-    def get_params_names() -> list:
-        return [x[0] for x in GameParams.get_params_tuples()]
+    @classmethod
+    def all_paramnames(cls) -> list:
+        return [x[0] for x in cls.all_param_tuples()]
 
-    @staticmethod
-    def get_cmdargs_names() -> list:
-        return [GameParams.paramname_to_cmdarg(x) for x in GameParams.get_params_names()]
+    @classmethod
+    def all_argnames(cls) -> list:
+        return [cls.paramname_to_argname(x) for x in cls.all_paramnames()]
+
+    def handle_arguments(self, argv=None):
+        """argv simulates sys.argv"""
+
+        argv_backup = sys.argv[:]
+        if argv is not None:
+            sys.argv = argv
+
+        parser = argparse.ArgumentParser(description=COINTOSS_DESCRIPTION)
+        # parser.add_argument("--allow-negative-scores", default=False, action=argparse.BooleanOptionalAction)
+        #TODO: programmatically add arguments from GameParams attribute list
+        for paramname in GameParams.all_paramnames():
+            cmdarg = GameParams.paramname_to_argname(paramname)
+            paramtype = GameParams.get_param_type(paramname)
+
+            # print(f"adding argument {cmdarg} of type {paramtype}")
+            if paramtype == bool:
+                parser.add_argument(cmdarg, dest=paramname, action='store_true')
+            else:
+                parser.add_argument(cmdarg, dest=paramname)
+
+
+        args = parser.parse_args()
+
+        # ALLOW_NEGATIVE_SCORE = args.ALLOW_NEGATIVE_SCORE
+        # GameParams.allow_negative_scores = args.allow_negative_scores
+
+        for paramname in self.all_paramnames():
+            value = getattr(args, paramname)
+            if value is not None:
+                print(f"setting {paramname} to {getattr(args, paramname)}")
+                setattr(self, paramname, getattr(args, paramname))
+
+        # print(GameParams.all_paramnames())
+        # print(GameParams.all_argnames())
+                   
+        print("\n".join(str(x) for x in self.all_param_tuples()))
+
+        sys.argv = argv_backup
+
 
 class GameRecorder:
     """Container class for easy recording of Game variables.
@@ -91,6 +151,7 @@ class GameRecorder:
         except:
             return False
 
+
 class Player:
     """Holds params and util functions relative to individual Players.
     Used in Game objects as an array of Players"""
@@ -102,6 +163,7 @@ class Player:
     def is_alive(self):
         return self.score > 0
 
+
 class Game:
     """main object, meant to be run() in __main__"""
     def __init__(self, nb_players=NB_PLAYERS):
@@ -112,6 +174,7 @@ class Game:
         self.round = 0
         self.betting_amount = BETTING_AMOUNT
         self.rec = GameRecorder()
+        self.params = GameParams()
 
     @property
     def scores(self):
@@ -253,41 +316,7 @@ class Game:
         # fig.show()
         plt.show()
 
-# TODO: make global args instance to access user parameters. Maybe a convenient encapsulation of ArgumentParser.args ?
-def handle_arguments():
-    global ALLOW_NEGATIVE_SCORE
-    import argparse
-    parser = argparse.ArgumentParser(description="cointoss: a game about the organic emergence of inequalities")
-    # parser.add_argument("--allow-negative-scores", default=False, action=argparse.BooleanOptionalAction)
-    #TODO: programmatically add arguments from GameParams attribute list
-    for paramname in GameParams.get_params_names():
-        cmdarg = GameParams.paramname_to_cmdarg(paramname)
-        paramtype = GameParams.get_param_type(paramname)
 
-        # print(f"adding argument {cmdarg} of type {paramtype}")
-        if paramtype == bool:
-            parser.add_argument(cmdarg, dest=paramname, action='store_true')
-        else:
-            parser.add_argument(cmdarg, dest=paramname)
-
-
-    args = parser.parse_args()
-
-    # ALLOW_NEGATIVE_SCORE = args.ALLOW_NEGATIVE_SCORE
-    # GameParams.allow_negative_scores = args.allow_negative_scores
-
-    for paramname in GameParams.get_params_names():
-        value = getattr(args, paramname)
-        if value is not None:
-            print(f"setting {paramname} to {getattr(args, paramname)}")
-            setattr(GameParams, paramname, getattr(args, paramname))
-
-    # print(GameParams.get_params_names())
-    # print(GameParams.get_cmdargs_names())
-               
-    print("\n".join(str(x) for x in GameParams.get_params_tuples()))
-
-    exit(0)
 
 def configure_logging():
     logging.basicConfig(level=logging.DEBUG)
@@ -295,10 +324,10 @@ def configure_logging():
 
 if __name__ == "__main__":
     configure_logging()
-    handle_arguments()
+    game = Game()
+    game.params.handle_arguments()
     exit(0)
 
-    game = Game()
     logging.info("== COIN TOSS GAME START ==")
     game.display()
     for round in range(NB_ROUNDS):
